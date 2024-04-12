@@ -44,18 +44,28 @@ async def start_command(client, message: Message):
 )
 
 @app.on_message(
-filters.command("banall") 
-& filters.group
+    filters.command("banall") 
+    & (filters.group | filters.channel)
 )
 async def banall_command(client, message: Message):
-    print("getting memebers from {}".format(message.chat.id))
-    async for i in app.get_chat_members(message.chat.id):
-        try:
-            await app.ban_chat_member(chat_id = message.chat.id, user_id = i.user.id)
-            print("kicked {} from {}".format(i.user.id, message.chat.id))
-        except Exception as e:
-            print("failed to kicked {} from {}".format(i.user.id, e))           
-    print("process completed")
+    chat_id = message.chat.id
+    if message.chat.type == "channel":
+        async for member in app.iter_chat_members(chat_id):
+            try:
+                await app.kick_chat_member(chat_id, member.user.id)
+                print("Kicked {} from channel {}".format(member.user.id, chat_id))
+            except Exception as e:
+                print("Failed to kick {} from channel {}: {}".format(member.user.id, chat_id, e))
+        print("Ban all process completed for channel {}".format(chat_id))
+    else:
+        async for member in app.iter_chat_members(chat_id):
+            try:
+                await app.ban_chat_member(chat_id, member.user.id)
+                print("Banned {} from group {}".format(member.user.id, chat_id))
+            except Exception as e:
+                print("Failed to ban {} from group {}: {}".format(member.user.id, chat_id, e))
+        print("Ban all process completed for group {}".format(chat_id))
+        
     
 
 # start bot client
